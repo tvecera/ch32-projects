@@ -18,3 +18,8 @@ on low-cost, open-source hardware hacking.
 - **Description**: An adaptation of the CH32V003-GameConsole project by Stefan Wagner for CH32LibSDK, using the
   newer CH32V002J4M6 MCU instead of the discontinued CH32V003. 
 - **Repository**: [tvecera/CH32LibSDK/tree/main/_devices/tinyboy](https://github.com/tvecera/CH32LibSDK/tree/main/_devices/tinyboy)
+
+### Olimex RVPC Port to CH32LibSDK
+
+- **Description**: Port of the RVPC (the EURO 1.00 RISC-V personal computer with VGA, keyboard, and Woz-like monitor) from Olimex to the CH32LibSDK.
+- **Repository**: [tvecera/CH32LibSDK/tree/main/_devices/rvpc](https://github.com/tvecera/CH32LibSDK/tree/main/_devices/rvpc)
