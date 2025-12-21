@@ -1,0 +1,3 @@
+#!/bin/bash
+# Reset device...
+${CH32_ROOT_PATH}/_r1.sh

@@ -1,0 +1,3 @@
+#!/bin/bash
+# Delete...
+${CH32_ROOT_PATH}/_d1.sh
