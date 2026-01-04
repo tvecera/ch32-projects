@@ -28,8 +28,17 @@ on low-cost, open-source hardware hacking.
 ### Olimex RVPC Port to CH32LibSDK
 
 - **Description**: Port of the RVPC (the EURO 1.00 RISC-V personal computer with VGA, keyboard, and Woz-like monitor)
-  from Olimex to the CH32LibSDK.
-- **Repository**: [tvecera/CH32LibSDK/tree/main/_devices/rvpc](https://github.com/tvecera/CH32LibSDK/tree/main/_devices/rvpc)
+  from Olimex to the CH32LibSDK. In addition to the SDK port, RCA composite video output support has been added
+  using the rca-library.
+- **Repository**: [tvecera/ch32-projects/tree/main/rvpc](https://github.com/tvecera/ch32-projects/tree/main/rvpc)
+
+### RCA Composite Video Library
+
+- **Description**: A library for generating composite video signal (RCA output) on CH32V002/CH32V003 microcontrollers.
+  Supports multiple graphics modes (128x64, 160x120) and text modes (40x30, 32x24, 23x18 characters) with minimal
+  RAM and Flash usage. Features both bit-bang and SPI output modes, works with internal oscillator (HSI) or external
+  crystal (HSE).
+- **Repository**: [tvecera/ch32-projects/tree/main/rca-library](https://github.com/tvecera/ch32-projects/tree/main/rca-library)
 
 ### Pimitachi – 3D Case and Labels
 

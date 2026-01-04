@@ -1,0 +1,26 @@
+MCU?=CH32V002x4
+RCA_LIB_ROOT_PATH?=.
+
+#-----------------------------------------------------------------------------
+# Font files for text modes
+#-----------------------------------------------------------------------------
+CSRC += ${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_bold_8x8.c
+CSRC += ${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_thin_8x8.c
+CSRC += ${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_bold_8x8_64.c
+CSRC += ${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_thin_8x8_64.c
+CSRC += ${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_rvpc.c
+CSRC += ${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_80.c
+CSRC += ${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_81.c
+CSRC += ${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_zx.c
+
+#-----------------------------------------------------------------------------
+# Application source files
+#-----------------------------------------------------------------------------
+
+CSRC += ${RCA_LIB_ROOT_PATH}/src/rca_video.c
+
+SRC +=
+
+EXTRA_AFLAGS += -D REDUCE_CRT0_SIZE=1
+CFLAGS += -flto
+LDFLAGS += -flto

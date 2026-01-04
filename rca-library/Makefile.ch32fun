@@ -1,0 +1,46 @@
+##############################################################################
+# RCA Library - ch32fun build configuration
+# Include this from your project Makefile AFTER ch32fun.mk
+#
+# Note: Source files should be added in your project Makefile BEFORE
+# including ch32fun.mk (due to immediate evaluation of FILES_TO_COMPILE)
+##############################################################################
+
+TARGET_MCU?=CH32V002
+
+# Library source files
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/src/rca_video.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/font_bold_8x8.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/font_thin_8x8.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_bold_8x8.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_thin_8x8.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_bold_8x8_64.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_thin_8x8_64.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_rvpc.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_80.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_81.c
+ADDITIONAL_C_FILES+=${RCA_LIB_ROOT_PATH}/fonts/text_mode_font_zx.c
+
+# Enable CH32FUN framework detection in source code
+EXTRA_CFLAGS+=-DCH32FUN=1
+
+# Include CH32Fun build system
+include $(CH32FUN)/ch32fun.mk
+
+#-----------------------------------------------------------------------------
+# Build configuration for consistent video timing
+#-----------------------------------------------------------------------------
+# Override architecture for xpack toolchain (add zicsr+zifencei)
+ifeq ($(findstring CH32V003,$(TARGET_MCU)),CH32V003)
+ARCHCFG_XPACK = -march=rv32ec_zicsr_zifencei -mabi=ilp32e
+else
+ARCHCFG_XPACK = -march=rv32ec_zicsr_zifencei_zmmul -mabi=ilp32e
+endif
+
+CURRENT_ARCH = $(filter -march=%,$(CFLAGS_ARCH))
+CFLAGS_ARCH := $(subst $(CURRENT_ARCH),$(firstword $(ARCHCFG_XPACK)),$(CFLAGS_ARCH))
+
+# Match ch32libsdk settings for consistent code generation
+CFLAGS := $(subst -msmall-data-limit=8,-msmall-data-limit=0,$(CFLAGS))
+CFLAGS += -funsigned-char
+CFLAGS += -fno-ipa-cp
