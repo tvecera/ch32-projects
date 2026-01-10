@@ -30,7 +30,7 @@ USE_RCA?=0
 DEVCLASS=ch32base
 
 # Path to CH32LibSDK root directory (without trailing '/')
-CH32_ROOT_PATH?=../../../../ch32/CH32LibSDK
+CH32_ROOT_PATH?=../../../sdk/CH32LibSDK
 CH32LIBSDK_OPENOCD_DIR?=../../../../ch32/OpenOCD
 RCA_LIB_ROOT_PATH?=../../../rca-library
 DEVICE_DIR?=../../src

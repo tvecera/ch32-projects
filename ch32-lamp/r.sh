@@ -1,3 +1,7 @@
 #!/bin/bash
 # Reset device...
-${CH32_ROOT_PATH}/_r1.sh
+
+# Set CH32_ROOT_PATH if not set
+export CH32_ROOT_PATH="${CH32_ROOT_PATH:-../sdk/CH32LibSDK}"
+
+../tools/CH32LibSDK/_r1.sh

@@ -47,3 +47,69 @@ on low-cost, open-source hardware hacking.
   printable labels (photo paper + transparent film), and assembly instructions.
 - **Original project**: [Pimitachi on breatharian.eu](https://www.breatharian.eu/hw/ch32libsdk/#pimitachi)
 - **Repository**: [tvecera/ch32-projects/tree/main/pimitachi](https://github.com/tvecera/ch32-projects/tree/main/pimitachi)
+
+## Supported Platforms
+
+Build system supports **Linux** and **macOS** (both x86_64 and ARM64/Apple Silicon).
+
+## Getting Started
+
+### Cloning the Repository
+
+This repository uses Git submodules for SDK dependencies. Clone with:
+
+```bash
+git clone --recursive https://github.com/tvecera/ch32-projects.git
+```
+
+Or if you already cloned without `--recursive`:
+
+```bash
+git submodule update --init --recursive
+```
+
+### SDK Submodules
+
+The repository includes three SDK submodules in the `sdk/` directory:
+
+| SDK | Description |
+|-----|-------------|
+| [CH32LibSDK](https://github.com/Panda381/CH32LibSDK) | SDK for CH32V/X series MCUs |
+| [PicoLibSDK](https://github.com/Panda381/PicoLibSDK) | SDK for Raspberry Pi Pico / RP2040 / RP2350 |
+| [ch32fun](https://github.com/cnlohr/ch32fun) | Lightweight SDK for CH32V003 |
+
+### Required Toolchains
+
+Different projects require different toolchains:
+
+#### For CH32 Projects (ch32-lamp, rvpc, rca-library, tinyboy)
+
+- **RISC-V GCC Toolchain** - `riscv-none-elf-gcc`
+
+**Recommended: xPack RISC-V GCC (cross-platform):**
+
+Download pre-built binaries from [xPack RISC-V GCC releases](https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases) and add to PATH.
+
+**macOS/Linux (npm):**
+```bash
+npm install --location=global @xpack-dev-tools/riscv-none-elf-gcc@latest
+```
+
+#### For Picopad Projects (picopad-ch32prog)
+
+- **ARM GCC Toolchain** - `arm-none-eabi-gcc`
+
+**macOS (Homebrew):**
+```bash
+brew install arm-none-eabi-gcc
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt install gcc-arm-none-eabi
+```
+
+#### Additional Tools
+
+- **make** - Build automation
+- **minichlink** - CH32 programmer/debugger (included in `tools/minichlink/`)

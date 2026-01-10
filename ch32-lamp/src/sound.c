@@ -64,7 +64,7 @@ void OutSamp(s16 samp)
 #define PWM_MAX	2176
 
 // timer handler
-HANDLER void TIM1_UP_IRQHandler(void)
+__attribute__((interrupt)) void TIM1_UP_IRQHandler(void)
 {
 	// clear interrupt request
 	TIM1_UpIntClr();

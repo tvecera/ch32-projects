@@ -8,10 +8,10 @@ USE_RCA="${2:-0}"
 MCU_UPPER=$(echo "$MCU" | tr '[:lower:]' '[:upper:]')
 
 # Set CH32_ROOT_PATH if not set
-export CH32_ROOT_PATH="${CH32_ROOT_PATH:-../../ch32/CH32LibSDK}"
+export CH32_ROOT_PATH="${CH32_ROOT_PATH:-../../../sdk/CH32LibSDK}"
 
 echo "Using SDK: ${SDK}, USE_RCA: ${USE_RCA}"
 
 export MCU="${MCU_UPPER}x4"
 export USE_RCA="${USE_RCA}"
-${CH32_ROOT_PATH}/_c1.sh "${MCU_UPPER}x4"
+../../../tools/CH32LibSDK/_c1.sh "${MCU_UPPER}x4"

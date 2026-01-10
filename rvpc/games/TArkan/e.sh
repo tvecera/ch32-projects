@@ -4,5 +4,5 @@
 # Set CH32_ROOT_PATH if not set
 
 echo "Flashing..."
-export CH32_ROOT_PATH="${CH32_ROOT_PATH:-../../ch32/CH32LibSDK}"
-${CH32_ROOT_PATH}/_e1.sh
+export CH32_ROOT_PATH="${CH32_ROOT_PATH:-../../../sdk/CH32LibSDK}"
+../../../tools/CH32LibSDK/_e1.sh

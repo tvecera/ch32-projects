@@ -1,12 +1,11 @@
 # Target MCU: CH32V002x4
-MCU=CH32V002x4
+MCU?=CH32V002x4
 
 # Device class for CH32LibSDK
 DEVCLASS=ch32base
 
 # Path to CH32LibSDK root directory (without trailing '/')
-CH32_ROOT_PATH?=../../CH32LibSDK
-CH32LIBSDK_OPENOCD_DIR?=../../OpenOCD
+CH32_ROOT_PATH?=../sdk/CH32LibSDK
 
 # Flag - do not include boot section
 NOBOOT=1
@@ -48,7 +47,7 @@ LDFLAGS += -Wl,--print-memory-usage
 # reduce program size
 EXTRA_AFLAGS += -D REDUCE_CRT0_SIZE=1
 
-override COMP = riscv-wch-elf-
+override COMP = riscv-none-elf-
 
 ##############################################################################
 # Build System (stage 2)
@@ -56,6 +55,17 @@ override COMP = riscv-wch-elf-
 
 # Include CH32LibSDK build system (stage 2 - build rules)
 include ${CH32_ROOT_PATH}/Makefile2.inc
+
+# Override architecture for xpack toolchain (add zicsr+zifencei for SDK inline asm)
+ifeq ($(findstring CH32V003,$(MCU)),CH32V003)
+ARCHCFG_XPACK = -march=rv32ec_zicsr_zifencei -mabi=ilp32e
+else
+ARCHCFG_XPACK = -march=rv32ec_zicsr_zifencei_zmmul -mabi=ilp32e
+endif
+
+CFLAGS := $(subst $(ARCHCFG),$(ARCHCFG_XPACK),$(CFLAGS))
+LDFLAGS := $(subst $(ARCHCFG),$(ARCHCFG_XPACK),$(LDFLAGS))
+AFLAGS := $(subst $(ARCHCFG),$(ARCHCFG_XPACK),$(AFLAGS))
 
 ##############################################################################
 # Create .siz file from .elf file
