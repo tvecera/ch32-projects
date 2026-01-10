@@ -7,6 +7,10 @@
 
 #include INCLUDES_H		// all includes
 
+#if USE_RCA
+#include "../../../rca-library/include.h"
+#endif
+
 #define RUSTICAL_STYLE_WALLS
 #define DUNGEON_MASTER_STYLE_WALLS
 //#define _USE_FIELD_OF_VIEW_

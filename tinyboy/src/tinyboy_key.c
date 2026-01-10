@@ -108,8 +108,7 @@ void KeyScan() {
     if (CheckKey(i) == 0) {
       // button is pressed for the first time
       if (!KeyPressMap[i]) {
-        KeyLastPress[i] =
-            t + (KEYCNT_PRESS - KEYCNT_REPEAT) * 1000 * HCLK_PER_US;
+        KeyLastPress[i] = t + (KEYCNT_PRESS - KEYCNT_REPEAT) * 1000 * HCLK_PER_US;
         KeyPressMap[i] = True;
         KeyWriteKey(i + 1);
       }

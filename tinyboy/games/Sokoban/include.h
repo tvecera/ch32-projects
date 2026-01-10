@@ -7,6 +7,10 @@
 
 #include INCLUDES_H		// all includes
 
+#if USE_RCA
+#include "../../../rca-library/include.h"
+#endif
+
 #include "src/game.h"		// game engine
 #include "src/levels.h"		// game levels
 #include "src/select.h"		// select

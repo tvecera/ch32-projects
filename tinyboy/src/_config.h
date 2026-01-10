@@ -3,7 +3,21 @@
 //                             Device setup
 // ----------------------------------------------------------------------------
 
+#ifndef USE_RCA
+#define USE_RCA	    0
+#endif
+
 // display
+#if USE_RCA
+// Videomodes (B&W mono):
+//  0 ... graphics mode 128x64 pixels, required memory 1024 B (driver size 738 B in RAM)
+//  1 ... graphics mode 160x120 pixels, required memory 2400 B (driver size 738 B in RAM)
+#ifndef VMODE
+#define VMODE	0
+#endif
+
+#else
+
 #define DISP_I2C_ADDR	0x3C	// display I2C address
 #define DISP_SDA_GPIO	PC1	// display gpio with SDA
 #define DISP_SCL_GPIO	PC2	// display gpio with SCL
@@ -17,10 +31,13 @@
 #define DISP_SPEED_HZ	750000	// 750000 hardware display driver: I2C speed in Hz ... DispUpdate() takes 3M:4ms, 2M:6ms, 1M:11ms, 500K:20ms
 #endif
 
+#endif
+
 #ifndef USE_DISP
 #define USE_DISP	1	// 1=use software display driver, 2=use hardware display driver (0=no driver)
 #endif
 
+// default device setup
 #ifndef USE_SD
 #define USE_SD		0	// 1=use software SD card driver, 2=use hardware SD card driver (0=no driver)
 #endif
@@ -111,7 +128,11 @@
 #endif
 
 #ifndef USE_I2C
+#if USE_RCA
+#define USE_I2C		0	// 1=use I2C peripheral
+#else
 #define USE_I2C		1	// 1=use I2C peripheral
+#endif
 #endif
 
 #ifndef USE_IRQ
@@ -131,26 +152,47 @@
 #endif
 
 #ifndef USE_USART
-#define USE_USART	1	// 1=use USART peripheral
+#define USE_USART	0	// 1=use USART peripheral
 #endif
 
 // ----------------------------------------------------------------------------
 //                            Clock Setup
 // ----------------------------------------------------------------------------
 
+// Clock source selection:
+//   USE_HSI = 1: Internal HSI oscillator (no external crystal needed)
+//                Less accurate, may cause slight timing drift
+//   USE_HSI = 0: External HSE crystal oscillator (requires 25MHz crystal on PA1/PA2)
+//                More accurate and stable timing for video sync
+#ifndef USE_HSI
+#define USE_HSI         1
+#endif
+
 // frequency of HSI internal oscillator 24MHz
 #ifndef HSI_VALUE
+#if USE_RCA
+#define HSI_VALUE	25000000
+#else
 #define HSI_VALUE	24000000
+#endif
 #endif
 
 // System clock source: 1=HSI, 2=HSE, 3=HSE_Bypass, 4=PLL_HSI, 5=PLL_HSE, 6=PLL_HSE_Bypass, 7=PLL_HSI/2, 8=PLL_HSE/2, 9=PLL_HSE_Bypass/2
 #ifndef SYSCLK_SRC
+#if USE_RCA
+#define SYSCLK_SRC	4
+#else
 #define SYSCLK_SRC	1
+#endif
 #endif
 
 // PLL multiplier
 #ifndef PLLCLK_MUL
+#if USE_RCA
+#define PLLCLK_MUL	2		// only *2 supported; 24 MHz * 2 = 48 MHz
+#else
 #define PLLCLK_MUL	0		// only *2 supported; 24 MHz * 2 = 48 MHz
+#endif
 #endif
 
 // System clock divider: 1, 2, 3, 4, 5, 6, 7, 8, 16, 32, 64, 128, 256 (default 1)
@@ -166,7 +208,11 @@
 // number of HCLK clock cycles per 1 us (used with Wait functions)
 // - If you want to change frequency of system clock run-time, use a variable instead of constant.
 #ifndef HCLK_PER_US
+#if USE_RCA
+#define HCLK_PER_US	50
+#else
 #define HCLK_PER_US	24
+#endif
 #endif
 
 // increment of system time in [ms] on SysTick interrupt (0=do not use SysTick interrupt)
@@ -180,7 +226,7 @@
 
 // Periferals
 #ifndef ENABLE_SRAM
-#define ENABLE_SRAM	1		// SRAM enable
+#define ENABLE_SRAM	    1		// SRAM enable
 #endif
 
 #ifndef ENABLE_FLASH
@@ -188,51 +234,47 @@
 #endif
 
 #ifndef ENABLE_WWDG
-#define ENABLE_WWDG	0		// Window watchdog enable
+#define ENABLE_WWDG	    0		// Window watchdog enable
 #endif
 
 #ifndef ENABLE_PWR
-#define ENABLE_PWR	1		// Power module enable
+#define ENABLE_PWR	    1		// Power module enable
 #endif
 
 #ifndef ENABLE_AFI
-#define ENABLE_AFI	1		// I/O auxiliary function enable
+#define ENABLE_AFI	    1		// I/O auxiliary function enable
 #endif
 
 #ifndef ENABLE_PA
-#define ENABLE_PA	1		// PA port enable
+#define ENABLE_PA	    1		// PA port enable
 #endif
 
 #ifndef ENABLE_PB
-#define ENABLE_PB	0		// PB port enable
+#define ENABLE_PB	    0		// PB port enable
 #endif
 
 #ifndef ENABLE_PC
-#define ENABLE_PC	1		// PC port enable
+#define ENABLE_PC	    1		// PC port enable
 #endif
 
 #ifndef ENABLE_PD
-#define ENABLE_PD	1		// PD port enable
+#define ENABLE_PD	    1		// PD port enable
 #endif
 
 #ifndef ENABLE_ADC1
-#define ENABLE_ADC1	0		// ADC1 module enable
+#define ENABLE_ADC1	    0		// ADC1 module enable
 #endif
 
 #ifndef ENABLE_TIM1
-#define ENABLE_TIM1	1		// TIM1 module enable
+#define ENABLE_TIM1	    1		// TIM1 module enable
 #endif
 
 #ifndef ENABLE_TIM2
-#define ENABLE_TIM2	0		// TIM2 module enable
-#endif
-
-#ifndef ENABLE_TIM3
-#define ENABLE_TIM3	0		// TIM3 module enable
+#define ENABLE_TIM2	    0		// TIM2 module enable
 #endif
 
 #ifndef ENABLE_SPI1
-#define ENABLE_SPI1	0		// SPI1 module enable
+#define ENABLE_SPI1	    0		// SPI1 module enable
 #endif
 
 #ifndef ENABLE_USART1
@@ -252,5 +294,5 @@
 #endif
 
 #ifndef ENABLE_I2C1
-#define ENABLE_I2C1	0		// I2C1 module enable
+#define ENABLE_I2C1	    0		// I2C1 module enable
 #endif

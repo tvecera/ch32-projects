@@ -101,7 +101,7 @@
  *        2: TIM2_CH1 = PC1    3: TIM2_CH1 = PC1
  *
  * 4. DIRECT REGISTER ACCESS (if VIDEO_PIN port changes):
- *    - Update GPIOD_BCR to match the new port (e.g., GPIOC_BCR for port C)
+ *    - Update VIDEO_GPIO_BCR to match the new port (e.g., VIDEO_GPIO_BCR for port C)
  *    - Update gpiod_data address in SendByteBitBang() assembly functions
  *      (GPIOD_BASE + 0x0C for port D, GPIOC_BASE + 0x0C for port C, etc.)
  *
@@ -148,7 +148,17 @@ static rca_frame_callback_t frame_end_callback = 0;
 // VIDEO_PIN: Direct bit-bang output for pixel data (or SPI MOSI for SPI mode)
 // SYNC_PIN:  TIM2_CH1 PWM output for HSYNC/VSYNC pulses
 
-#if USE_RCA_SPI
+// Tinyboy does not support SPI mode
+#if USE_TINYBOY && USE_RCA_SPI
+#error "USE_TINYBOY does not support USE_RCA_SPI mode"
+#endif
+
+#if USE_TINYBOY
+// Tinyboy mode: PC2 = GPIO output (video data via software bit-banging)
+#define VIDEO_PIN           PC2         // Video data output pin
+#define VIDEO_PIN_MASK      (1 << 2)    // Bit mask for VIDEO_PIN in GPIOC
+#define VIDEO_GPIO_BCR      (*(volatile u32*)(GPIOC_BASE + 0x14)) // GPIOC Bit Clear Register
+#elif USE_RCA_SPI
 // SPI mode: PC6 = SPI1_MOSI (video data via hardware SPI)
 #define VIDEO_PIN           PC6         // Video data output pin (SPI1_MOSI)
 #define VIDEO_PIN_MASK      (1 << 6)    // Bit mask for VIDEO_PIN in GPIOC
@@ -160,14 +170,11 @@ static rca_frame_callback_t frame_end_callback = 0;
 #define VIDEO_GPIO_BCR      (*(volatile u32*)(GPIOD_BASE + 0x14)) // GPIOD Bit Clear Register
 #endif
 
-#if USE_RVPC
+#if USE_RVPC || USE_TINYBOY
 #define SYNC_PIN            PC1         // Sync signal output pin (TIM2_CH1)
 #else
 #define SYNC_PIN            PD4         // Sync signal output pin (TIM2_CH1)
 #endif
-
-// Legacy alias for backward compatibility
-#define GPIOD_BCR           VIDEO_GPIO_BCR
 
 // ============================================================================
 // Internal State Variables
@@ -279,7 +286,7 @@ void rca_init() {
     GPIO_Mode(VIDEO_PIN, GPIO_MODE_OUT_FAST); // VIDEO_PIN (PD6) = video data output
 #endif
 
-#if USE_RVPC
+#if USE_RVPC || USE_TINYBOY
 #if CH32V003
     GPIO_Remap_TIM2(2);
 #else

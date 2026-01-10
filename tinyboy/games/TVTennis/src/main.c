@@ -15,8 +15,8 @@
 
 #define DIGW	(8*COORD_MUL)	// digit width in pixels
 #define DIGH	(10*COORD_MUL)	// digit height in pixels
-#define DIGXL	((6*8-5)*COORD_MUL) // left score X
-#define DIGXR	((8*8+4)*COORD_MUL) // right score X
+#define DIGXL	(40*COORD_MUL) // left score X (byte-aligned, ends at 55)
+#define DIGXR	(72*COORD_MUL) // right score X (byte-aligned, starts at 72)
 #define MAXSCORE 99		// max. score
 #define NETW	(3*COORD_MUL)	// width of middle net
 #define DIGNUM	2		// number of digits of one score
@@ -137,8 +137,8 @@ void DispScore(int inx)
 	x = (inx == 0) ? (DIGXL>>COORD_SHIFT) : (DIGXR>>COORD_SHIFT);
 
 	// decode digits
-	DrawImgBg(ImgDigits + dig[0], x, 0, 8, 10, 10);
-	DrawImgBg(ImgDigits + dig[1], x+8, 0, 8, 10, 10);
+	DrawImgInvFast(ImgDigits, x, 0, dig[0]*8, 0, 8, 10, 10);
+	DrawImgInvFast(ImgDigits, x+8, 0, dig[1]*8, 0, 8, 10, 10);
 }
 
 // display both scores

@@ -1,7 +1,5 @@
 #!/bin/bash
-# Compilation... Compile all projects in all sub-directories
-MCU="${1:-ch32v002}"
-USE_RCA="${2:-0}"
+# Flash... Flash all projects in all sub-directories
 
 # Function to compile one project in subdirectory
 comp1() {
@@ -12,7 +10,7 @@ comp1() {
     cd "$dir" || return
     echo
     echo "======== Compiling $dir ========"
-    ./e.sh ${MCU} ${USE_RCA}
+    ./e.sh
     read -p "Press Enter to continue..."
     cd ..
 }

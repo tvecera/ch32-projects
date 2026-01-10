@@ -1,5 +1,9 @@
-
+#if USE_RCA
+#include "../../../rca-library/include.h"
+#else
 #include "tinyboy_disp.h"	// display driver
+#endif
+
 #include "tinyboy_draw.h"	// drawing
 #include "tinyboy_key.h"	// keyboard
 #include "tinyboy_snd.h"	// sound

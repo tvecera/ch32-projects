@@ -14,6 +14,8 @@
 
 #if USE_DISP		// 1=use software display driver, 2=use hardware display driver (0=no driver)
 
+#if !USE_RCA
+
 #ifndef _TINYBOY_DISP_H
 #define _TINYBOY_DISP_H
 
@@ -61,5 +63,7 @@ void DispUpdate();
 #endif
 
 #endif // _TINYBOY_DISP_H
+
+#endif // USE_RCA
 
 #endif // USE_DISP

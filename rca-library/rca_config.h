@@ -186,7 +186,9 @@
 #define ENABLE_TIM1     1                       // TIM1 module enable
 #endif
 
+#ifndef ENABLE_TIM2
 #define ENABLE_TIM2     1                       // TIM2 module enable
+#endif
 
 #ifndef ENABLE_SPI1
 #if USE_RCA_SPI

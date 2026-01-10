@@ -10,6 +10,8 @@
 
 #if USE_DISP		// 1=use software display driver, 2=use hardware display driver (0=no driver)
 
+#if !USE_RCA
+
 u8 FrameBuf[FRAMESIZE];		// display graphics buffer
 
 #if USE_SCREENSHOT		// 1=use screen shot
@@ -335,5 +337,7 @@ void DispUpdate()
 		DispI2C_Stop();				// stop transfer
 	}
 }
+
+#endif // USE_RCA
 
 #endif // USE_DISP

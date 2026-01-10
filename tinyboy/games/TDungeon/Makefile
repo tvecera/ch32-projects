@@ -6,9 +6,11 @@
 # Setup device class
 MCU=CH32V002x4
 DEVCLASS=ch32base
+USE_RCA?=0
 
 # Path to root directory from the project directory (without trailing '/' delimiter)
 CH32_ROOT_PATH?=../../../sdk/CH32LibSDK
+RCA_LIB_ROOT_PATH?=../../../rca-library
 DEVICE_DIR?=../../src
 
 # Include CH32LibSDK build system (stage 1 - configuration)
@@ -16,6 +18,11 @@ include ${CH32_ROOT_PATH}/Makefile1.inc
 
 # Include common RVPC device code
 include ${DEVICE_DIR}/_makefile.inc
+
+ifeq ($(USE_RCA),1)
+# Include rca-library Makefile fragment
+include ${RCA_LIB_ROOT_PATH}/Makefile.ch32libsdk
+endif
 
 ##############################################################################
 #                           Project base configuration
@@ -60,7 +67,7 @@ SRC += src/TinyJoypadUtils.cpp
 
 # Additional linker flags (show memory usage)
 LDFLAGS += -Wl,--print-memory-usage
-
+EXTRA_CPPFLAGS += -Wno-register
 override COMP = riscv-none-elf-
 
 # Include CH32LibSDK build system (stage 2 - build rules)

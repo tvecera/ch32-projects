@@ -1,7 +1,6 @@
 #!/bin/bash
 # Compilation... Compile all projects in all sub-directories
-MCU="${1:-ch32v002}"
-USE_RCA="${2:-0}"
+USE_RCA="${1:-0}"
 
 # Function to compile one project in subdirectory
 comp1() {
@@ -12,7 +11,7 @@ comp1() {
     cd "$dir" || return
     echo
     echo "======== Compiling $dir ========"
-    ./c.sh ${MCU} ${USE_RCA}
+    ./c.sh ${USE_RCA}
     cd ..
 }
 

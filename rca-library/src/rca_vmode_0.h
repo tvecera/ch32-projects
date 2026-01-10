@@ -60,9 +60,12 @@ extern u8 FrameBuf[];
 #define VSCALE_SHIFT          2    // >> 2 = divide by 4
 #define SPI_BAUD_PRESCALER    SPI_BAUD_DIV16
 
-// Fast send of 8 pixels on PD6 for graphics mode 128x64
+// Fast send of 8 pixels for graphics mode 128x64
 // Each pixel takes ~14 cycles at 50 MHz = 0.28 us/pixel
-// PD6 = bit 6 in GPIOD, so we shift data bits to position 6
+//
+// Pin configuration:
+//   USE_TINYBOY: PC2 = bit 2 in GPIOC, shift data bits to position 2
+//   Default:     PD6 = bit 6 in GPIOD, shift data bits to position 6
 //
 // Cycle timing per instruction:
 //   andi/slli/srli: 1 cycle
@@ -72,13 +75,36 @@ extern u8 FrameBuf[];
 //   c.bnez taken:   2 cycles, not taken: 1 cycle
 //
 // Loop timing for counter=4: 3*(1+2) + (1+1) = 11 cycles
+
+#if USE_TINYBOY
+#define BB_GPIO_BASE    GPIOC_BASE
+#define BB_SHIFT_BIT7   "c.srli a2, 5 \n"
+#define BB_SHIFT_BIT6   "c.srli a2, 4 \n"
+#define BB_SHIFT_BIT5   "c.srli a2, 3 \n"
+#define BB_SHIFT_BIT4   "c.srli a2, 2 \n"
+#define BB_SHIFT_BIT3   "c.srli a2, 1 \n"
+#define BB_SHIFT_BIT2   ""
+#define BB_SHIFT_BIT1   "c.slli a2, 1 \n"
+#define BB_SHIFT_BIT0   "c.slli a2, 2 \n"
+#else
+#define BB_GPIO_BASE    GPIOD_BASE
+#define BB_SHIFT_BIT7   "c.srli a2, 1 \n"
+#define BB_SHIFT_BIT6   ""
+#define BB_SHIFT_BIT5   "c.slli a2, 1 \n"
+#define BB_SHIFT_BIT4   "c.slli a2, 2 \n"
+#define BB_SHIFT_BIT3   "c.slli a2, 3 \n"
+#define BB_SHIFT_BIT2   "c.slli a2, 4 \n"
+#define BB_SHIFT_BIT1   "c.slli a2, 5 \n"
+#define BB_SHIFT_BIT0   "c.slli a2, 6 \n"
+#endif
+
 INLINE static void SendByteBitBang(u8 data) {
-    register u32 gpiod_data = GPIOD_BASE + 0x0C; // GPIOD OUTDR offset
+    register u32 gpio_data = BB_GPIO_BASE + 0x0C;
 
     asm volatile(
         // Bit 7 (MSB): andi[1] + srli[1] + sw[1] + li[1] + loop[11] = 15 cycles
         "andi   a2, %0, 0x80        \n" // [1] mask bit 7
-        "c.srli a2, 1               \n" // [1] shift right 1: 0x80 -> 0x40
+        BB_SHIFT_BIT7
         "sw     a2, 0(%1)           \n" // [1] output to GPIO
         "c.li   a3, 4               \n" // [1] loop counter
         "1: c.addi a3, -1           \n" // [1] decrement
@@ -86,6 +112,7 @@ INLINE static void SendByteBitBang(u8 data) {
 
         // Bit 6: andi[1] + sw[1] + li[1] + loop[11] = 14 cycles (no shift needed)
         "andi   a2, %0, 0x40        \n" // [1] mask bit 6
+        BB_SHIFT_BIT6
         "sw     a2, 0(%1)           \n" // [1] output to GPIO
         "c.li   a3, 4               \n" // [1] loop counter
         "2: c.addi a3, -1           \n" // [1] decrement
@@ -93,7 +120,7 @@ INLINE static void SendByteBitBang(u8 data) {
 
         // Bit 5: andi[1] + slli[1] + sw[1] + li[1] + loop[11] = 15 cycles
         "andi   a2, %0, 0x20        \n" // [1] mask bit 5
-        "c.slli a2, 1               \n" // [1] shift left 1: 0x20 -> 0x40
+        BB_SHIFT_BIT5
         "sw     a2, 0(%1)           \n" // [1] output to GPIO
         "c.li   a3, 4               \n" // [1] loop counter
         "3: c.addi a3, -1           \n" // [1] decrement
@@ -101,7 +128,7 @@ INLINE static void SendByteBitBang(u8 data) {
 
         // Bit 4: andi[1] + slli[1] + sw[1] + li[1] + loop[11] = 15 cycles
         "andi   a2, %0, 0x10        \n" // [1] mask bit 4
-        "c.slli a2, 2               \n" // [1] shift left 2: 0x10 -> 0x40
+        BB_SHIFT_BIT4
         "sw     a2, 0(%1)           \n" // [1] output to GPIO
         "c.li   a3, 4               \n" // [1] loop counter
         "4: c.addi a3, -1           \n" // [1] decrement
@@ -109,7 +136,7 @@ INLINE static void SendByteBitBang(u8 data) {
 
         // Bit 3: andi[1] + slli[1] + sw[1] + li[1] + loop[11] = 15 cycles
         "andi   a2, %0, 0x08        \n" // [1] mask bit 3
-        "c.slli a2, 3               \n" // [1] shift left 3: 0x08 -> 0x40
+        BB_SHIFT_BIT3
         "sw     a2, 0(%1)           \n" // [1] output to GPIO
         "c.li   a3, 4               \n" // [1] loop counter
         "5: c.addi a3, -1           \n" // [1] decrement
@@ -117,7 +144,7 @@ INLINE static void SendByteBitBang(u8 data) {
 
         // Bit 2: andi[1] + slli[1] + sw[1] + li[1] + loop[11] = 15 cycles
         "andi   a2, %0, 0x04        \n" // [1] mask bit 2
-        "c.slli a2, 4               \n" // [1] shift left 4: 0x04 -> 0x40
+        BB_SHIFT_BIT2
         "sw     a2, 0(%1)           \n" // [1] output to GPIO
         "c.li   a3, 4               \n" // [1] loop counter
         "6: c.addi a3, -1           \n" // [1] decrement
@@ -125,7 +152,7 @@ INLINE static void SendByteBitBang(u8 data) {
 
         // Bit 1: andi[1] + slli[1] + sw[1] + li[1] + loop[11] = 15 cycles
         "andi   a2, %0, 0x02        \n" // [1] mask bit 1
-        "c.slli a2, 5               \n" // [1] shift left 5: 0x02 -> 0x40
+        BB_SHIFT_BIT1
         "sw     a2, 0(%1)           \n" // [1] output to GPIO
         "c.li   a3, 4               \n" // [1] loop counter
         "7: c.addi a3, -1           \n" // [1] decrement
@@ -134,13 +161,13 @@ INLINE static void SendByteBitBang(u8 data) {
         // Bit 0 (LSB): andi[1] + slli[1] + sw[1] + li[1] + loop[5] = 9 cycles
         // Shorter delay for last pixel (next byte setup overlaps)
         "andi   a2, %0, 0x01        \n" // [1] mask bit 0
-        "c.slli a2, 6               \n" // [1] shift left 6: 0x01 -> 0x40
+        BB_SHIFT_BIT0
         "sw     a2, 0(%1)           \n" // [1] output to GPIO
         "c.li   a3, 2               \n" // [1] loop counter
         "8: c.addi a3, -1           \n" // [1] decrement
         "c.bnez a3, 8b              \n" // [2/1] branch: 3+2 = 5 cycles
         :
-        : "r" (data), "r" (gpiod_data)
+        : "r" (data), "r" (gpio_data)
         : "a2", "a3", "memory"
     );
 }

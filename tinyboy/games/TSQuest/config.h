@@ -177,4 +177,8 @@
 */
 #include "../../src/_config.h"
 
+#if USE_RCA
+#include "../../../rca-library/rca_config.h"
+#endif
+
 #endif // _CONFIG_H

@@ -22,7 +22,8 @@ on low-cost, open-source hardware hacking.
 ### Tinyboy Console
 
 - **Description**: An adaptation of the CH32V003-GameConsole project by Stefan Wagner for CH32LibSDK, using the
-  newer CH32V002J4M6 MCU instead of the discontinued CH32V003.
+  newer CH32V002J4M6 MCU instead of the discontinued CH32V003. Supports two video outputs: original I2C OLED display
+  or RCA composite video output using the rca-library.
 - **Repository**: [tvecera/ch32-projects/tree/main/tinyboy](https://github.com/tvecera/ch32-projects/tree/main/tinyboy)
 
 ### Olimex RVPC Port to CH32LibSDK

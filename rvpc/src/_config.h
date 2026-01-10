@@ -46,6 +46,10 @@
 #define USE_RCA	    0
 #endif
 
+// ----------------------------------------------------------------------------
+//                            Clock Setup
+// ----------------------------------------------------------------------------
+
 // frequency of HSI internal oscillator 24MHz
 #ifndef HSI_VALUE
 #define HSI_VALUE	25000000
@@ -81,6 +85,10 @@
 #ifndef SYSTICK_MS
 #define SYSTICK_MS	0
 #endif
+
+// ----------------------------------------------------------------------------
+//                          Peripheral clock enable
+// ----------------------------------------------------------------------------
 
 // Periferals
 #ifndef ENABLE_SRAM

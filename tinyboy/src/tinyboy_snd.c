@@ -125,7 +125,7 @@ void SoundInit()
 {
 	// setup output pins
 	RCC_AFIClkEnable();
-	RCC_PDClkEnable();
+	RCC_PAClkEnable();
 	GPIO_Mode(PA1, GPIO_MODE_AF);
 
 	// Enable timer clock source
@@ -177,7 +177,7 @@ void SoundTerm()
 	// Reset timer to default setup
 	TIM1_Reset();
 
-	// reset output pins
+	// reset output pin
 	GPIO_PinReset(PA1);
 }
 
