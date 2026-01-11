@@ -1,0 +1,65 @@
+##############################################################################
+# CH32Fun Makefile for RCA Tester
+# Framework: https://github.com/cnlohr/ch32fun
+##############################################################################
+all : build
+
+TARGET:=rca-tester
+TARGET_MCU?=CH32V002
+PREFIX?=riscv-none-elf
+
+#-----------------------------------------------------------------------------
+# Detect OS and architecture for minichlink
+#-----------------------------------------------------------------------------
+UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
+
+ifeq ($(UNAME_S),Darwin)
+    ifeq ($(UNAME_M),arm64)
+        MINICHLINK_PLATFORM := aarch64-macos
+    else
+        MINICHLINK_PLATFORM := x86_64-macos
+    endif
+else ifeq ($(UNAME_S),Linux)
+    ifeq ($(UNAME_M),aarch64)
+        MINICHLINK_PLATFORM := aarch64-linux-gnu
+    else
+        MINICHLINK_PLATFORM := x86_64-linux-gnu
+    endif
+endif
+
+MINICHLINK := ../tools/CH32LibSDK/minichlink/$(MINICHLINK_PLATFORM)
+
+#-----------------------------------------------------------------------------
+# Source files (must be before ch32fun.mk include)
+# Note: rca.c includes src/main.c, added automatically by ch32fun.mk
+#-----------------------------------------------------------------------------
+ADDITIONAL_C_FILES+=src/main.c
+ADDITIONAL_C_FILES+=src/draw.c
+ADDITIONAL_C_FILES+=src/print.c
+ADDITIONAL_C_FILES+=src/key.c
+ADDITIONAL_C_FILES+=src/snd.c
+
+# Path to rca-library
+RCA_LIB_ROOT_PATH?=../rca-library
+
+# Set CH32FUN path explicitly
+CH32FUN:=../sdk/ch32fun/ch32fun/
+
+# Override default file list (exclude blink.c, use our sources)
+override FILES_TO_COMPILE=$(SYSTEM_C) $(ADDITIONAL_C_FILES)
+
+# Include rca-library build config (architecture, LTO settings)
+include ${RCA_LIB_ROOT_PATH}/Makefile.ch32fun
+
+#-----------------------------------------------------------------------------
+# Targets
+#-----------------------------------------------------------------------------
+# Build only (no flash)
+build : $(TARGET).bin
+
+# Flash existing binary (no rebuild)
+flash :
+	$(MINICHLINK)/minichlink -E -w $(TARGET).bin $(WRITE_SECTION) -b
+
+clean : cv_clean

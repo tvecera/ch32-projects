@@ -36,8 +36,8 @@
 
 // VMODE 8 - Text mode 23x18 characters of 8x8 pixels (14 scanlines/row) with custom fonts of 64/128 characters
 // RAM: framebuffer 414 B + LUT 56 B + state 8 B + handler ~418 B = ~896 B (bit-bang)
-// RAM: framebuffer 414 B + LUT 56 B + LUT 256 B + state 8 B + handler ~380 B = ~1114 B (SPI)
-// Flash: font 8x8 pixels 2048/4096 B (64/128 chars)
+// RAM: framebuffer 414 B + LUT 56 B + state 8 B + handler ~350 B = ~828 B (SPI)
+// Flash: font 8x8 pixels 2048 B (SPI) or 4096 B nibble-packed (bit-bang)
 // Original Olimex RVPC video mode
 #if VMODE == 8
 
@@ -55,15 +55,15 @@ extern u8 FrameBuf[];
 #ifndef TIM_VIDEO_START
 #if USE_RCA_SPI
 #if CH32V003
-#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(22300ULL)
+#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(19800ULL)
 #else
-#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(20300ULL)
+#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(19800ULL)
 #endif
 #else
 #if CH32V003
-#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(11500ULL)
+#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(11600ULL)
 #else
-#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(10600ULL)
+#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(11000ULL)
 #endif
 #endif
 #endif
@@ -80,37 +80,6 @@ static u32 current_line_in_row = 0; // Current scanline within row (0..15)
 // Font row pointer lookup table for 14 scanlines per character row
 // Pattern: 0,0,1,1,2,3,3,4,5,5,6,6,7,7 (stretches 8 font lines to 14 scanlines)
 static const u8* font_row_ptr_lut[14];
-
-#if USE_RCA_SPI
-// Lookup table: byte → 2 bits (high nibble → bit1, low nibble → bit0)
-static const u8 byte_to_2bits[256] = {
-    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x0X: low nibble 0→0, 1-F→1
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x1X: high nibble 1→1
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x2X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x3X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x4X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x5X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x6X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x7X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x8X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x9X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xAX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xBX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xCX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xDX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xEX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 // 0xFX
-};
-
-// Convert nibble-format font data (4 bytes) to SPI byte (8 bits)
-// Uses LUT for constant-time conversion (4 lookups, no branches)
-INLINE static u8 pack_nibbles_to_spi(const u8* src) {
-    return (byte_to_2bits[src[0]] << 6) |
-        (byte_to_2bits[src[1]] << 4) |
-        (byte_to_2bits[src[2]] << 2) |
-        byte_to_2bits[src[3]];
-}
-#endif
 
 // Send 8 pixels from font character on PD6 for text mode 23x18
 // Font format: 4 bytes per character (2 pixels per byte in nibbles)
@@ -199,23 +168,45 @@ INLINE static void SendCharBitBangTextMode(const u8* font_data) {
 // FrameBuf contains font indices (mapped by print.c), use directly
 INLINE static void rca_render_line(u32 active_line) {
     (void)active_line; // unused, we track state internally
-    u8 ch;
     const u8* text_row = &FrameBuf[current_char_row * WIDTHBYTE];
     const u8* font_row = font_row_ptr_lut[current_line_in_row];
 
 #if USE_RCA_SPI
-    u8 spi_byte;
-    // Force 4-byte alignment for loop to ensure consistent timing (misaligned branch targets can cause fetch jitter)
-    asm volatile(".align 2");
-    for (ch = 0; ch < WIDTHBYTE; ch++) {
-        const u8* char_glyph = &font_row[text_row[ch] << 2];
-        spi_byte = pack_nibbles_to_spi(char_glyph);
-        SPI1->DATAR = spi_byte;
-    }
-    while (!(SPI1->STATR & (1 << 1))) {}
-    SPI1->DATAR = 0x00;
+    // SPI mode: graphics font format (1 byte = 8 pixels, direct to SPI)
+    // Font layout: font[line * 256 + char_index], LUT provides line pointer
+    // ASM loop based on babypc_vga_asm.S pattern
+    //
+    // SPI DIV8 @ 50MHz = 6.25 MHz SPI clock = 128 CPU cycles per byte
+    // Loop body must take 128 cycles to match SPI timing
+    asm volatile(
+        "   li      a3, %[width]            \n" // loop counter = 23
+        ".align 2,,                         \n" // align loop start
+        "2:                                 \n" // main loop: 128 cycles per iteration
+        "   lbu     a0, 0(%[text])          \n" // [2] load char index from FrameBuf
+        "   addi    %[text], %[text], 1     \n" // [1] advance text pointer
+        "   add     a0, %[font], a0         \n" // [1] compute font address
+        "   lbu     a0, 0(a0)               \n" // [3] load font byte from Flash
+        "   addi    a3, a3, -1              \n" // [1] decrement loop counter
+        "   sw      a0, 0x0C(%[spi])        \n" // [2] write to SPI DATAR
+        // delay loop: 28 iterations * 4 cycles = 112 cycles
+        "   li      a2, 12                  \n" // [1] delay counter
+        ".align 2,,                         \n"
+        "1: addi    a2, a2, -1              \n" // [1]
+        "   bnez    a2, 1b                  \n" // [3 taken, 1 not taken]
+        "   nop                             \n" // [1] padding
+        "   nop                             \n" // [1] padding
+        "   bnez    a3, 2b                  \n" // [3 taken, 1 not taken]
+        "   sw      zero, 0x0C(%[spi])      \n" // send trailing black
+        :
+        : [text] "r" (text_row),
+          [font] "r" (font_row),
+          [spi]  "r" (SPI1_BASE),
+          [width] "i" (WIDTHBYTE)
+        : "a0", "a2", "a3", "memory"
+    );
 #else
-    for (ch = 0; ch < WIDTHBYTE; ch++) {
+    // Bitbang mode: nibble-packed font format (4 bytes per char)
+    for (u8 ch = 0; ch < WIDTHBYTE; ch++) {
         const u8* char_glyph = &font_row[text_row[ch] << 2];
         SendCharBitBangTextMode(char_glyph);
     }
@@ -241,7 +232,11 @@ INLINE static void rca_vmode_init() {
     current_line_in_row = 0;
     // Initialize font row pointer LUT
     // Pattern: 0,0,1,1,2,3,3,4,5,5,6,6,7,7 (stretches 8 font lines to 14 scanlines)
-    const u16 stride = DrawFont->char_count * 4;
+#if USE_RCA_SPI
+    const u16 stride = 256; // SPI font: 256 bytes per line (font[line * 256 + char])
+#else
+    const u16 stride = DrawFont->char_count * 4; // Nibble font: char_count * 4 bytes per line
+#endif
     const u8* fdata = DrawFont->data;
     font_row_ptr_lut[0] = &fdata[0 * stride];
     font_row_ptr_lut[1] = &fdata[0 * stride];
@@ -263,7 +258,11 @@ INLINE static void rca_vmode_init() {
 INLINE static void rca_vmode_update_font() {
     current_char_row = 0;
     current_line_in_row = 0;
-    const u16 stride = DrawFont->char_count * 4;
+#if USE_RCA_SPI
+    const u16 stride = 256; // SPI font: 256 bytes per line (font[line * 256 + char])
+#else
+    const u16 stride = DrawFont->char_count * 4; // Nibble font: char_count * 4 bytes per line
+#endif
     const u8* fdata = DrawFont->data;
     font_row_ptr_lut[0] = &fdata[0 * stride];
     font_row_ptr_lut[1] = &fdata[0 * stride];

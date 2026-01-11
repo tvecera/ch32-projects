@@ -64,6 +64,9 @@ extern "C" {
 #if VMODE == 0
 #include "rca_vmode_0.h"
 #elif VMODE == 1
+#if CH32V003
+#error "VMODE 1 is only for CH32V002"
+#endif
 #include "rca_vmode_1.h"
 #elif VMODE == 6
 #include "rca_vmode_6.h"

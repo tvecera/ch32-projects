@@ -37,8 +37,8 @@
 
 // VMODE 7 - Text mode 32x24 characters of 8x8 pixels with custom fonts of 64/128 characters
 // RAM: framebuffer 768 B + state 20 B + handler ~430 B = ~1218 B (bit-bang)
-// RAM: framebuffer 768 B + LUT 256 B + state 20 B + handler ~400 B = ~1444 B (SPI)
-// Flash: font 8x8 pixels 2048/4096 B (64/128 chars)
+// RAM: framebuffer 768 B + state 20 B + handler ~350 B = ~1138 B (SPI)
+// Flash: font 8x8 pixels 2048 B (SPI) or 4096 B nibble-packed (bit-bang)
 #if VMODE == 7
 
 #include "../fonts/font_desc.h"
@@ -55,13 +55,13 @@ extern u8 FrameBuf[];
 #ifndef TIM_VIDEO_START
 #if USE_RCA_SPI
 #if CH32V003
-#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(18600ULL)
+#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(14500ULL)
 #else
-#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(16100ULL)
+#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(14000ULL)
 #endif
 #else
 #if CH32V003
-#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(12900ULL)
+#define TIM_VIDEO_START     TIM_TICKS_FROM_NS(13100ULL)
 #else
 #define TIM_VIDEO_START     TIM_TICKS_FROM_NS(11700ULL)
 #endif
@@ -77,37 +77,6 @@ extern u8 FrameBuf[];
 static u32 current_line_in_row = 0;     // Current scanline within text row (0..7)
 static const u8* current_font_row = 0;  // Pointer to current font row data
 static const u8* current_text_row = 0;  // Pointer to current text row in FrameBuf
-
-#if USE_RCA_SPI
-// Lookup table: byte → 2 bits (high nibble → bit1, low nibble → bit0)
-static const u8 byte_to_2bits[256] = {
-    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x0X: low nibble 0→0, 1-F→1
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x1X: high nibble 1→1
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x2X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x3X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x4X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x5X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x6X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x7X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x8X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0x9X
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xAX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xBX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xCX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xDX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xEX
-    2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3  // 0xFX
-};
-
-// Convert nibble-format font data (4 bytes) to SPI byte (8 bits)
-// Uses LUT for constant-time conversion (4 lookups, no branches)
-INLINE static u8 pack_nibbles_to_spi(const u8* src) {
-    return (byte_to_2bits[src[0]] << 6) |
-        (byte_to_2bits[src[1]] << 4) |
-        (byte_to_2bits[src[2]] << 2) |
-        byte_to_2bits[src[3]];
-}
-#endif
 
 // Send 8 pixels from font character on PD6 for text mode 32x24
 // Font format: 4 bytes per character (2 pixels per byte in nibbles)
@@ -187,17 +156,40 @@ INLINE static void rca_render_line(u32 active_line) {
     const u8* font_row = current_font_row;
 
 #if USE_RCA_SPI
-    u8 spi_byte;
-    // Force 4-byte alignment for loop to ensure consistent timing (misaligned branch targets can cause fetch jitter)
-    asm volatile(".align 2");
-    for (u8 ch = 0; ch < WIDTHBYTE; ch++) {
-        const u8* char_glyph = &font_row[text_row[ch] << 2];
-        spi_byte = pack_nibbles_to_spi(char_glyph);
-        SPI1->DATAR = spi_byte;
-    }
-    while (!(SPI1->STATR & (1 << 1))) {}
-    SPI1->DATAR = 0x00;
+    // SPI mode: graphics font format (1 byte = 8 pixels, direct to SPI)
+    // Font layout: font[line * 256 + char_index], 2048 bytes total
+    // ASM loop based on babypc_vga_asm.S VMODE 7 pattern
+    //
+    // SPI DIV8 @ 50MHz = 6.25 MHz SPI clock = 128 CPU cycles per byte
+    // Loop body must take 128 cycles to match SPI timing
+    asm volatile(
+        "   li      a3, %[width]            \n" // loop counter = 32
+        ".align 2,,                         \n" // align loop start
+        "2:                                 \n" // main loop: 128 cycles per iteration
+        "   lbu     a0, 0(%[text])          \n" // [2] load char index from FrameBuf
+        "   addi    %[text], %[text], 1     \n" // [1] advance text pointer
+        "   add     a0, %[font], a0         \n" // [1] compute font address
+        "   lbu     a0, 0(a0)               \n" // [3] load font byte from Flash
+        "   addi    a3, a3, -1              \n" // [1] decrement loop counter
+        "   sw      a0, 0x0C(%[spi])        \n" // [2] write to SPI DATAR
+        // delay loop: 28 iterations * 4 cycles = 112 cycles
+        "   li      a2, 12                  \n" // [1] delay counter
+        ".align 2,,                         \n"
+        "1: addi    a2, a2, -1              \n" // [1]
+        "   bnez    a2, 1b                  \n" // [3 taken, 1 not taken]
+        "   nop                             \n" // [1] padding
+        "   nop                             \n" // [1] padding
+        "   bnez    a3, 2b                  \n" // [3 taken, 1 not taken]
+        "   sw      zero, 0x0C(%[spi])      \n" // send trailing black
+        :
+        : [text] "r" (text_row),
+          [font] "r" (font_row),
+          [spi]  "r" (SPI1_BASE),
+          [width] "i" (WIDTHBYTE)
+        : "a0", "a2", "a3", "memory"
+    );
 #else
+    // Bitbang mode: nibble-packed font format (4 bytes per char)
     for (u8 ch = 0; ch < WIDTHBYTE; ch++) {
         const u8* char_glyph = &font_row[text_row[ch] << 2];
         SendCharBitBangTextMode(char_glyph);
@@ -206,7 +198,11 @@ INLINE static void rca_render_line(u32 active_line) {
 
     // Update counters for next scanline
     current_line_in_row++;
-    current_font_row += DrawFont->char_count * 4;
+#if USE_RCA_SPI
+    current_font_row += 256; // SPI font: 256 bytes per line (font[line * 256 + char])
+#else
+    current_font_row += DrawFont->char_count * 4; // Nibble font: char_count * 4 bytes per line
+#endif
     if (current_line_in_row >= LINES_PER_CHAR) {
         current_line_in_row = 0;
         current_font_row = DrawFont->data;
