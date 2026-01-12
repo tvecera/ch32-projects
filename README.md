@@ -41,6 +41,14 @@ on low-cost, open-source hardware hacking.
   crystal (HSE).
 - **Repository**: [tvecera/ch32-projects/tree/main/rca-library](https://github.com/tvecera/ch32-projects/tree/main/rca-library)
 
+### RCA Tester
+
+- **Description**: A simple composite video tester and demonstration of the rca-library capabilities. Generates
+  PAL composite video signals with multiple test patterns (grid, crosshatch, circles, checkerboard, etc.) and text
+  modes with various fonts. Includes complete hardware design files for DIY manufacturing (KiCAD schematics, PCB
+  for laser etching, 3D printable case). Supports both CH32LibSDK and ch32fun frameworks.
+- **Repository**: [tvecera/ch32-projects/tree/main/rca-tester](https://github.com/tvecera/ch32-projects/tree/main/rca-tester)
+
 ### Pimitachi – 3D Case and Labels
 
 - **Description**: 3D printable case, labels, and laser-etched PCB design for Pimitachi – a Tamagotchi-style virtual pet
